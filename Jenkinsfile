@@ -1,7 +1,7 @@
 pipeline {
     agent {
         docker {
-            image 'samuelsamits/java_awesome-cicd'
+            image 'samuelsamits/ultimate-cicd'
             args '--user root -v /var/run/docker.sock:/var/run/docker.sock'
         }
     }
