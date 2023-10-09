@@ -52,15 +52,23 @@ pipeline {
                 script {
                     withCredentials([string(credentialsId: 'github', variable: 'GITHUB_TOKEN')]) {
                         sh '''
-                            git config user.email "samuelsamits@gmail.com"
-                            git config user.name "samuelsamits"
-                            BUILD_NUMBER=${BUILD_NUMBER}
-                            sed -i "s/replaceImageTag/$BUILD_NUMBER/g" manifests/deployment.yml
-                            git add manifests/deployment.yml
-                            git add target/
-                            git commit -m "Update image version \$BUILD_NUMBER"
-                            git push https://$GITHUB_TOKEN@github.com/$GIT_USER_NAME/$GIT_REPO_NAME HEAD:main
-                        '''
+    git config --global user.email "samuelsamits@gmail.com"
+    git config --global user.name "samuelsamits"
+    BUILD_NUMBER="${BUILD_NUMBER}"
+    sed -i "s/replaceImageTag/\$BUILD_NUMBER/g" manifests/deployment.yml
+    
+    # Add the file to the git staging area
+    git add manifests/deployment.yml
+    
+    # Use git add with force (-f) to include ignored files
+    git add -f target/
+    
+    # Commit the changes
+    git commit -m "Update image version \$BUILD_NUMBER"
+    
+    # Push the changes
+    git push https://$GITHUB_TOKEN@github.com/$GIT_USER_NAME/$GIT_REPO_NAME HEAD:main
+'''
                     }
                 }
             }
