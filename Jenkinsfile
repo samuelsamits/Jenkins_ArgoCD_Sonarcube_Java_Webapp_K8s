@@ -1,10 +1,10 @@
 pipeline {
     agent {
         docker {
-          image 'chaitannyaa/maven-plus-docker'
-          args '--user root -v /var/run/docker.sock:/var/run/docker.sock' // mount Docker socket to access the host's Docker daemon
+            image 'samuelsamits/java_awesome-cicd'
+            args '--user root -v /var/run/docker.sock:/var/run/docker.sock'
+        }
     }
-  }
     stages {
         stage('Build and Test') {
             steps {
@@ -43,32 +43,40 @@ pipeline {
                 }
             }
         }
-        stage('Update Deployment File') {
+        stage('Update Deployment File and Commit Changes') {
             environment {
                 GIT_REPO_NAME = "Jenkins_ArgoCD_Sonarcube_Java_Webapp_K8s"
                 GIT_USER_NAME = "samuelsamits"
             }
             steps {
                 script {
-                    withCredentials([string(credentialsId: 'github', variable: 'GITHUB_TOKEN')]) {
-                        sh '''
-    git config --global user.email "samuelsamits@gmail.com"
-    git config --global user.name "samuelsamits"
-    BUILD_NUMBER="${BUILD_NUMBER}"
-    sed -i "s/replaceImageTag/\$BUILD_NUMBER/g" manifests/deployment.yml
-    
-    # Add the file to the git staging area
-    git add manifests/deployment.yml
-    
-    # Use git add with force (-f) to include ignored files
-    git add -f target/
-    
-    # Commit the changes
-    git commit -m "Update image version \$BUILD_NUMBER"
-    
-    # Push the changes
-    git push https://$GITHUB_TOKEN@github.com/$GIT_USER_NAME/$GIT_REPO_NAME HEAD:main
-'''
+                    // Set Git user information
+                    sh "git config user.email 'samuelsamits@gmail.com'"
+                    sh "git config user.name 'samuelsamits'"
+                    
+                    // Update the image tag in the deployment file
+                    def buildNumber = BUILD_NUMBER
+                    sh "sed -i 's/replaceImageTag/\$BUILD_NUMBER/g' manifests/deployment.yml"
+                    
+                    // Add the modified file to the Git staging area
+                    try {
+                        sh "git add manifests/deployment.yml"
+                    } catch (Exception e) {
+                        error "Failed to add the file to the Git staging area: ${e.message}"
+                    }
+                    
+                    // Commit changes
+                    try {
+                        sh "git commit -m 'Update image version \$BUILD_NUMBER'"
+                    } catch (Exception e) {
+                        error "Failed to commit changes: ${e.message}"
+                    }
+                    
+                    // Push changes to the remote repository
+                    try {
+                        sh "git push https://${GITHUB_TOKEN}@github.com/${GIT_USER_NAME}/${GIT_REPO_NAME} HEAD:main"
+                    } catch (Exception e) {
+                        error "Failed to push changes to the remote repository: ${e.message}"
                     }
                 }
             }
