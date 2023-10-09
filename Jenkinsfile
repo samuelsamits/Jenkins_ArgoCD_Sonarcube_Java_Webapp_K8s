@@ -50,40 +50,17 @@ pipeline {
             }
             steps {
                 script {
-                    // Set Git user information
-                    sh "git config user.email 'samuelsamits@gmail.com'"
-                    sh "git config user.name 'samuelsamits'"
-                    
-                    // Update the image tag in the deployment file
-                    def buildNumber = BUILD_NUMBER
-                    sh "sed -i 's/replaceImageTag/\$BUILD_NUMBER/g' manifests/deployment.yml"
-                    
-                    // Check if there are changes to commit
-                    def hasChanges = sh(returnStatus: true, script: "git diff --quiet --exit-code manifests/deployment.yml")
-                    
-                    if (hasChanges == 0) {
-                        // Add the modified file to the Git staging area
-                        try {
-                            sh "git add manifests/deployment.yml"
-                        } catch (Exception e) {
-                            error "Failed to add the file to the Git staging area: ${e.message}"
-                        }
-                        
-                        // Commit changes
-                        try {
-                            sh "git commit -m 'Update image version \$BUILD_NUMBER'"
-                        } catch (Exception e) {
-                            error "Failed to commit changes: ${e.message}"
-                        }
-                        
-                        // Push changes to the remote repository
-                        try {
-                            sh "git push https://${GITHUB_TOKEN}@github.com/${GIT_USER_NAME}/${GIT_REPO_NAME} HEAD:main"
-                        } catch (Exception e) {
-                            error "Failed to push changes to the remote repository: ${e.message}"
-                        }
-                    } else {
-                        echo "No changes to commit."
+                    withCredentials([string(credentialsId: 'github', variable: 'GITHUB_TOKEN')]) {
+                        sh '''
+                            git config user.email "samuelsamits@gmail.com"
+                            git config user.name "samuelsamits"
+                            BUILD_NUMBER=${BUILD_NUMBER}
+                            sed -i "s/replaceImageTag/\$BUILD_NUMBER/g" manifests/deployment.yml
+                            git add manifests/deployment.yml
+                            git add target/
+                            git commit -m "Update image version \$BUILD_NUMBER"
+                            git push https://$GITHUB_TOKEN@github.com/$GIT_USER_NAME/$GIT_REPO_NAME HEAD:main
+                        '''
                     }
                 }
             }
