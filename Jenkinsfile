@@ -16,7 +16,7 @@ pipeline {
         }
         stage('Code Analysis with SonarQube') {
             environment {
-                SONAR_URL = 'http://100.25.200.83:9000'
+                SONAR_URL = 'http://18.233.62.94:9000'
             }
             steps {
                 script {
