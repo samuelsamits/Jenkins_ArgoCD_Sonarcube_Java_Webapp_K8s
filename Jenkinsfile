@@ -55,10 +55,13 @@ pipeline {
                             git config user.email "samuelsamits@gmail.com"
                             git config user.name "samuelsamits"
                             BUILD_NUMBER=${BUILD_NUMBER}
-                            sed -i "s/replaceImageTag/$BUILD_NUMBER/g" manifests/deployment.yml
+                            sed -i "s/replaceImageTag/\$BUILD_NUMBER/g" manifests/deployment.yml
                             git add manifests/deployment.yml
                             # Exclude the 'target/' directory from being added to Git
                             git add --all :!target/
+                            git status
+                            # Remove untracked files in the 'target/' directory
+                            git clean -f -d target/
                             git commit -m "Update image version \$BUILD_NUMBER"
                             git push https://$GITHUB_TOKEN@github.com/$GIT_USER_NAME/$GIT_REPO_NAME HEAD:main
                         '''
