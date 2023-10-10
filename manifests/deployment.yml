@@ -16,6 +16,6 @@ spec:
     spec:
       containers:
       - name: my-app
-        image: samuelsamits/java_awesome-cicd:1 
+        image: samuelsamits/java_awesome-cicd:22
         ports:
         - containerPort: 8080
